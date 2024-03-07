@@ -24,9 +24,10 @@ var (
 )
 
 type ValidationContext struct {
-	CertificateStore X509CertificateStore
-	IdAttribute      string
-	Clock            *Clock
+	CertificateStore          X509CertificateStore
+	IdAttribute               string
+	Clock                     *Clock
+	SkipCertificateValidation bool
 }
 
 func NewDefaultValidationContext(certificateStore X509CertificateStore) *ValidationContext {
@@ -457,8 +458,10 @@ func (ctx *ValidationContext) verifyCertificate(sig *types.Signature) (*x509.Cer
 		return nil, errors.New("Could not verify certificate against trusted certs")
 	}
 
-	if now.Before(cert.NotBefore) || now.After(cert.NotAfter) {
-		return nil, errors.New("Cert is not valid at this time")
+	if !ctx.SkipCertificateValidation {
+		if now.Before(cert.NotBefore) || now.After(cert.NotAfter) {
+			return nil, errors.New("Cert is not valid at this time")
+		}
 	}
 
 	return cert, nil
